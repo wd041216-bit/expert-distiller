@@ -1,7 +1,7 @@
 ---
 name: profile-distiller
 description: "Expert Distiller — Profile filling specialist. Reads source dossiers and fills expert profile contracts using LLM-driven distillation. Produces complete expert profiles with reasoning kernels, critique styles, and knowledge bases."
-tools: ["Read", "Write", "Grep", "Glob", "Bash"]
+tools: ["Read", "Write", "Grep", "Glob", "Bash", "mcp__web_reader__webReader"]
 model: opus
 color: purple
 ---

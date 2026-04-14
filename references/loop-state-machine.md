@@ -26,7 +26,7 @@ INIT ──► DISCOVER ──► DISTILL ──► COUNCIL ──► SCORE
 - **Input**: User idea/domain string, optional target repo URL
 - **Action**: Parse idea into domain spec, initialize directory layout, create domain.json
 - **Output**: Initialized forum root with domain definition
-- **CLI**: `expert_distiller.py init`
+- **CLI**: `python3 scripts/expert_distiller.py init`
 - **Transition**: Always → DISCOVER
 
 ### Phase 2: DISCOVER
@@ -34,7 +34,7 @@ INIT ──► DISCOVER ──► DISTILL ──► COUNCIL ──► SCORE
 - **Action**: Web search for expert candidates, collect source URLs
 - **Output**: Candidate JSON files with auto-collected source dossiers
 - **Tools**: web-search-prime, web-reader
-- **CLI**: `expert_distiller.py discover` / `expert_distiller.py candidate` / `expert_distiller.py source`
+- **CLI**: `python3 scripts/expert_distiller.py discover` / `python3 scripts/expert_distiller.py candidate` / `python3 scripts/expert_distiller.py source`
 - **Transition**: Always → DISTILL
 - **Minimum**: At least 3 candidates discovered
 
@@ -43,7 +43,7 @@ INIT ──► DISCOVER ──► DISTILL ──► COUNCIL ──► SCORE
 - **Action**: Audit each candidate, LLM-driven profile filling from sources
 - **Output**: Promoted expert profiles with filled contract fields
 - **Agent**: profile-distiller
-- **CLI**: `expert_distiller.py audit` / `expert_distiller.py fill` / `expert_distiller.py profile`
+- **CLI**: `python3 scripts/expert_distiller.py audit` / `python3 scripts/expert_distiller.py fill` / `python3 scripts/expert_distiller.py profile`
 - **Transition**: Always → COUNCIL
 - **Gate**: At least 2 experts must pass promotion audit
 
@@ -51,7 +51,7 @@ INIT ──► DISCOVER ──► DISTILL ──► COUNCIL ──► SCORE
 - **Input**: Promoted expert profiles
 - **Action**: Form council with role assignment, weight balancing
 - **Output**: Council definition JSON
-- **CLI**: `expert_distiller.py council create`
+- **CLI**: `python3 scripts/expert_distiller.py council create`
 - **Transition**: Always → SCORE
 
 ### Phase 5: SCORE (first pass)
@@ -59,7 +59,7 @@ INIT ──► DISCOVER ──► DISTILL ──► COUNCIL ──► SCORE
 - **Action**: First scoring pass — all axes start at 0 (no artifact exists yet)
 - **Output**: Scoring report with total = 0, gaps = "everything"
 - **Agent**: maturity-scorer
-- **CLI**: `expert_distiller.py score`
+- **CLI**: `python3 scripts/expert_distiller.py score`
 - **Transition**: Always → BUILD (first pass always needs work)
 
 ### Phase 6: BUILD
@@ -67,7 +67,7 @@ INIT ──► DISCOVER ──► DISTILL ──► COUNCIL ──► SCORE
 - **Action**: Generate project code targeting weakest axes
 - **Output**: Built artifact at target repo
 - **Agent**: project-builder
-- **CLI**: `expert_distiller.py build`
+- **CLI**: `python3 scripts/expert_distiller.py build`
 - **Transition**: Always → DEBUG
 
 ### Phase 7: DEBUG
@@ -84,7 +84,7 @@ INIT ──► DISCOVER ──► DISTILL ──► COUNCIL ──► SCORE
 - **Action**: Full 4-axis scoring with council debate protocol
 - **Output**: Updated scoring report
 - **Agent**: maturity-scorer
-- **CLI**: `expert_distiller.py score`
+- **CLI**: `python3 scripts/expert_distiller.py score`
 - **Transition**:
   - total = 100 + verification all PASS → SUBMIT
   - total < 100 → GAP_FILL
@@ -95,7 +95,7 @@ INIT ──► DISCOVER ──► DISTILL ──► COUNCIL ──► SCORE
 - **Action**: Identify gaps, determine if new experts needed
 - **Output**: Gap analysis with recommendations
 - **Agent**: gap-analyst
-- **CLI**: `expert_distiller.py coverage`
+- **CLI**: `python3 scripts/expert_distiller.py coverage`
 - **Transition**:
   - Missing expertise → DISCOVER (single candidate, fast-track)
   - Knowledge gaps (no new expert needed) → BUILD

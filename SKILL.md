@@ -145,6 +145,7 @@ INIT → DISCOVER → DISTILL → COUNCIL → SCORE
 1. Create council:
    ```bash
    python3 scripts/expert_distiller.py council create --root <root> --domain <domain> --name "<Domain> Main Council"
+   # Optional: --experts id1,id2,id3 to specify which experts (default: all)
    ```
 2. Review the auto-assigned roles (chair, reviewer, advocate, skeptic)
 3. If needed, manually adjust with `council add-member --role <role>`
@@ -213,7 +214,7 @@ For each stage failure:
 - Tag failure with impacted scoring axis (see `references/build-integration.md`)
 - If 3 retries exhausted, feed failure to GAP_FILL
 
-**Agent**: Use `build-error-resolver` agent for build failures
+**Agent**: Use `project-builder` agent for build failure fixes
 
 **Transition**:
 - All PASS → RESCORE

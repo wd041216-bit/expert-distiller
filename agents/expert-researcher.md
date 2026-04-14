@@ -1,7 +1,7 @@
 ---
 name: expert-researcher
 description: "Expert Distiller — Research specialist. Discovers expert candidates via web search using Z.AI tools, collects source URLs, evaluates source tier quality, and produces candidate dossiers ready for distillation."
-tools: ["Read", "Write", "Grep", "Glob", "Bash"]
+tools: ["Read", "Write", "Grep", "Glob", "Bash", "mcp__web-search-prime__web_search_prime", "mcp__web_reader__webReader", "mcp__zread__read_file", "mcp__zread__get_repo_structure"]
 model: sonnet
 color: green
 ---

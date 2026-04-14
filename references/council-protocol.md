@@ -27,6 +27,7 @@ Role assignment algorithm:
 3. If multiple experts tie for a role, prefer higher `source_confidence`
 4. Every council must have at least one chair and one skeptic
 5. If insufficient experts for all roles, one expert may hold multiple roles (chair + advocate, reviewer + skeptic)
+6. Councils with more than 4 experts will have multiple members in the "reviewer" role — this is expected and ensures all voices participate in scoring
 
 ### Weight Balancing
 
