@@ -1,0 +1,4 @@
+interface:
+  display_name: "Expert Distiller"
+  short_description: "Build source-gated expert forums."
+  default_prompt: "Distill a reusable expert forum for this domain using tiered public sources, promotion audits, profile contracts, and coverage-gap routing."
