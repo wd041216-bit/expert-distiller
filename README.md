@@ -1,8 +1,20 @@
+<div align="center">
+
 # Council Pilot
 
 **Give Claude Code a one-liner. Get a production-quality project.**
 
-Council Pilot is a Claude Code skill that builds an expert council from public sources, then autonomously drives your project through build-score-debug loops until it reaches 100/100 maturity. No micromanagement. No prompt-chaining. One sentence, hours of focused work.
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Claude Code Skill](https://img.shields.io/badge/Claude%20Code-Skill-blue)](https://docs.anthropic.com/en/docs/claude-code)
+[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](http://makeapullrequest.com)
+
+Council Pilot is a Claude Code skill that builds an expert council from public sources, then autonomously drives your project through build-score-debug loops until it reaches **100/100 maturity**.
+
+No micromanagement. No prompt-chaining. One sentence, hours of focused work.
+
+</div>
+
+---
 
 ```
 /council-pilot "Build a real-time collaborative whiteboard with WebSocket sync"
@@ -52,7 +64,7 @@ YOUR IDEA
 
 ## The Scoring Rubric
 
-Each axis is scored 0-25 by the expert council. Convergence requires 100/100:
+Each axis is scored 0-25 by the expert council. Convergence requires **100/100**:
 
 | Axis | What It Measures | How You Earn Points |
 |------|-----------------|---------------------|
@@ -62,6 +74,16 @@ Each axis is scored 0-25 by the expert council. Convergence requires 100/100:
 | **Effectiveness** | Problem-solution fit | Actually solves the stated problem, not just looks correct |
 
 100/100 is intentionally hard. The council won't award it until they can't find meaningful improvements.
+
+## Source Gates
+
+Expert quality is gate-kept, not assumed:
+
+- **Tier A**: Official pages, papers, books, formal lectures — defines core beliefs
+- **Tier B**: Interviews, essays, course notes — shapes reasoning patterns
+- **Tier C**: Social posts, forums, summaries — context only, cannot define core claims
+
+A candidate needs at least 1 Tier A + 1 Tier B source. No exceptions.
 
 ## Quick Start
 
@@ -122,16 +144,6 @@ python3 scripts/expert_distiller.py report --root ./forum --domain "AI Reliabili
 | `build` | Record build context |
 | `report` | Generate maturity report (JSON or Markdown) |
 
-## Source Gates
-
-Expert quality is gate-kept, not assumed:
-
-- **Tier A**: Official pages, papers, books, formal lectures — defines core beliefs
-- **Tier B**: Interviews, essays, course notes — shapes reasoning patterns
-- **Tier C**: Social posts, forums, summaries — context only, cannot define core claims
-
-A candidate needs at least 1 Tier A + 1 Tier B source. No exceptions.
-
 ## Agents
 
 | Agent | Role |
@@ -142,24 +154,6 @@ A candidate needs at least 1 Tier A + 1 Tier B source. No exceptions.
 | `project-builder` | Generates code guided by expert lenses |
 | `maturity-scorer` | Adversarial 4-axis scoring |
 | `gap-analyst` | Identifies coverage gaps and recommends next steps |
-
-## Output Layout
-
-```
-forum/
-├── forum_index.json              # Forum overview
-├── pipeline_state.json           # Current phase, scores, history
-├── domains/<domain_id>.json      # Domain definition
-├── candidates/<expert_id>.json   # Expert candidates
-├── source_dossiers/<id>.json     # Collected sources per expert
-├── promotion_audits/<id>.json   # Promotion gate results
-├── experts/<id>/profile.json     # Filled expert profiles
-├── experts/<id>/distillate.md   # Distilled reasoning markdown
-├── councils/<council_id>.json   # Council definitions with roles
-├── scoring_reports/<id>.json    # Per-iteration scoring reports
-├── gap_analyses/<id>.json       # Gap analysis with recommendations
-└── build_logs/<id>.json         # Build context per iteration
-```
 
 ## Dynamic Expert Addition
 
@@ -192,6 +186,24 @@ Expert profiles are **analysis lenses**, not primary evidence. Council Pilot:
 - Never fabricates quotes or invents private beliefs
 - Current data and user constraints always outrank expert memory
 
+## Output Layout
+
+```
+forum/
+├── forum_index.json              # Forum overview
+├── pipeline_state.json           # Current phase, scores, history
+├── domains/<domain_id>.json      # Domain definition
+├── candidates/<expert_id>.json   # Expert candidates
+├── source_dossiers/<id>.json     # Collected sources per expert
+├── promotion_audits/<id>.json   # Promotion gate results
+├── experts/<id>/profile.json     # Filled expert profiles
+├── experts/<id>/distillate.md    # Distilled reasoning markdown
+├── councils/<council_id>.json    # Council definitions with roles
+├── scoring_reports/<id>.json    # Per-iteration scoring reports
+├── gap_analyses/<id>.json       # Gap analysis with recommendations
+└── build_logs/<id>.json         # Build context per iteration
+```
+
 ## References
 
 - [`references/profile-contract.md`](references/profile-contract.md) — Expert profile JSON contract
@@ -202,6 +214,68 @@ Expert profiles are **analysis lenses**, not primary evidence. Council Pilot:
 - [`references/build-integration.md`](references/build-integration.md) — Build/debug cycle spec
 - [`references/github-submission.md`](references/github-submission.md) — Submission protocol
 
-## License
+---
 
-MIT
+<div align="center">
+
+**[English](#why-this-is-different) | [中文](#中文说明)**
+
+</div>
+
+---
+
+## 中文说明
+
+**给 Claude Code 一句话，它还你一个生产级项目。**
+
+Council Pilot 是一个 Claude Code 技能，从公开来源构建专家委员会，然后自主驱动项目通过构建-评分-调试循环，直到达到 **100/100 成熟度**。
+
+### 三个核心差异
+
+**1. 自主工作数小时。** 给它一个仓库和一句话，它自主规划、构建、测试、自我批评、迭代。一次典型运行耗时 2-3 小时，产出一个完整的项目版本——不是代码片段，不是建议，是一个可交付的项目。
+
+**2. 像资深工程师一样自我批评。** 专家委员会不是摆设。每个专家视角都从真实公开来源提炼——推理模式、证据偏好、批评习惯、已知盲区。委员会对每个评分决策进行辩论。质疑者挑战高分，辩护者维护低分。分数是挣来的，不是给的。
+
+**3. 无限适配。** 专家库为每个领域从零构建。AI 可靠性？金融风控？游戏引擎设计？Council Pilot 发现合适的专家，提炼他们的公开知识，按照他们的实际推理模式构建项目。换一个领域，得到一个完全不同的委员会。
+
+### 快速开始
+
+```bash
+# 安装
+git clone https://github.com/wd041216-bit/council-pilot.git ~/.claude/skills/council-pilot
+```
+
+重启 Claude Code，然后：
+
+```
+/council-pilot "构建一个带 WebSocket 同步的实时协作白板"
+```
+
+### 评分体系
+
+每轴 0-25 分，收敛需要 **100/100**：
+
+| 轴 | 衡量什么 | 如何获得分数 |
+|-----|---------|------------|
+| **广度** | 领域覆盖 | 每个子领域都被覆盖，没有盲区 |
+| **深度** | 专家丰富度 | 有来源支撑的推理，不是表面文章 |
+| **厚度** | 实际可执行性 | 代码编译通过、测试通过、边界情况处理 |
+| **有效性** | 问题-方案匹配 | 真正解决了问题，而不是看起来正确 |
+
+### 信任模型
+
+专家档案是**分析视角**，不是主要证据。Council Pilot：
+
+- 必须有 A 层 + B 层来源才能晋升
+- 永远不用 C 层来源定义核心信念
+- 保留来源间的分歧，而不是抹平它们
+- 永远不编造引用或捏造私人观点
+- 当前数据和用户约束始终优先于专家记忆
+
+---
+
+<div align="center">
+
+**License: MIT** · **Issues & PRs welcome** · **Star if you find it useful**
+
+</div>
