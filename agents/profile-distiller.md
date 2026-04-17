@@ -1,7 +1,7 @@
 ---
 name: profile-distiller
 description: "Expert Distiller — Profile filling specialist. Reads source dossiers and fills expert profile contracts using LLM-driven distillation. Produces complete expert profiles with reasoning kernels, critique styles, and knowledge bases."
-tools: ["Read", "Write", "Grep", "Glob", "Bash", "mcp__web_reader__webReader"]
+tools: ["Read", "Write", "Grep", "Glob", "Bash", "mcp__web_search_and_fetch__web_fetch"]
 model: opus
 color: purple
 ---
@@ -28,7 +28,7 @@ Read these files:
 ### 2. Read Source Content
 
 For each source in the dossier:
-1. If the source URL is accessible, read full content with `mcp__web_reader__webReader`
+1. If the source URL is accessible, read full content with `mcp__web_search_and_fetch__web_fetch`
 2. Extract key information per tier:
    - **Tier A**: Career facts, published works, institutional affiliations, formal methodologies
    - **Tier B**: Reasoning patterns, debate positions, interview insights, teaching style

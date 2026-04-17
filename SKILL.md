@@ -19,10 +19,8 @@ allowed-tools:
   - Grep
   - Glob
   - Agent
-  - mcp__web-search-prime__web_search_prime
-  - mcp__web_reader__webReader
-  - mcp__zread__read_file
-  - mcp__zread__get_repo_structure
+  - mcp__web_search_and_fetch__web_search
+  - mcp__web_search_and_fetch__web_fetch
 model: opus
 argument-hint: "<domain-or-idea> [--target-repo URL] [--max-iterations N] [--quick]"
 ---
@@ -90,8 +88,8 @@ INIT → DISCOVER → DISTILL → COUNCIL → SCORE
 
 **Steps**:
 1. Generate search queries from the domain topic (see `agents/expert-researcher.md`)
-2. For each query, use `mcp__web-search-prime__web_search_prime` to search
-3. For each result, use `mcp__web_reader__webReader` to read candidate pages
+2. For each query, use `mcp__web_search_and_fetch__web_search` to search
+3. For each result, use `mcp__web_search_and_fetch__web_fetch` to read candidate pages
 4. Identify real public figures with domain expertise
 5. Collect source URLs classified by tier (A/B/C per `references/source-gates.md`)
 6. For each candidate, run CLI commands:
@@ -121,7 +119,7 @@ INIT → DISCOVER → DISTILL → COUNCIL → SCORE
    python3 scripts/expert_distiller.py profile --root <root> --domain <domain> --expert-id <id> --name "<Name>"
    ```
 3. For each promoted expert, fill the profile by reading source content:
-   - Read source URLs with `mcp__web_reader__webReader`
+   - Read source URLs with `mcp__web_search_and_fetch__web_fetch`
    - Extract career arc, reasoning patterns, critique styles, blind spots
    - Write the filled profile to `experts/<id>/profile.json`
    - Write the distillate markdown to `experts/<id>/distillate.md`
@@ -358,10 +356,8 @@ Maximum 2 new experts per iteration. Total council size must not exceed 10.
 ## Search Tools
 
 Use GLM ecosystem MCP tools for web research:
-- `mcp__web-search-prime__web_search_prime` — primary search
-- `mcp__web_reader__webReader` — read full page content
-- `mcp__zread__read_file` — read GitHub repo files
-- `mcp__zread__get_repo_structure` — explore repo structure
+- `mcp__web_search_and_fetch__web_search` — primary search
+- `mcp__web_search_and_fetch__web_fetch` — read full page content
 
 ## Safety and Trust
 

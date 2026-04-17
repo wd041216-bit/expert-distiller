@@ -1,7 +1,7 @@
 ---
 name: expert-researcher
 description: "Expert Distiller — Research specialist. Discovers expert candidates via web search using Z.AI tools, collects source URLs, evaluates source tier quality, and produces candidate dossiers ready for distillation."
-tools: ["Read", "Write", "Grep", "Glob", "Bash", "mcp__web-search-prime__web_search_prime", "mcp__web_reader__webReader", "mcp__zread__read_file", "mcp__zread__get_repo_structure"]
+tools: ["Read", "Write", "Grep", "Glob", "Bash", "mcp__web_search_and_fetch__web_search", "mcp__web_search_and_fetch__web_fetch"]
 model: sonnet
 color: green
 ---
@@ -18,11 +18,9 @@ Given a domain and topic, search for 3-8 expert candidates, collect their public
 
 Use these MCP tools in priority order:
 
-1. **`mcp__web-search-prime__web_search_prime`** — Primary search. Use `search_query` with domain-specific expert queries. Set `location` to "us" for broader results, `content_size` to "high" for detailed summaries.
+1. **`mcp__web_search_and_fetch__web_search`** — Primary search. Use `query` with domain-specific expert queries. Returns search results with titles and URLs.
 
-2. **`mcp__web_reader__webReader`** — Read full content from discovered URLs to extract profile details, publication lists, and methodology descriptions.
-
-3. **`mcp__zread__read_file` / `mcp__zread__get_repo_structure`** — For candidates with GitHub presence, read their repos for code style, project patterns, and technical preferences.
+2. **`mcp__web_search_and_fetch__web_fetch`** — Read full content from discovered URLs to extract profile details, publication lists, and methodology descriptions.
 
 ## Workflow
 
