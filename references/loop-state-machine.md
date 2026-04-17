@@ -162,7 +162,7 @@ Stored at `<root>/pipeline_state.json`:
   "started_at": "2026-01-01T00:00:00Z",
   "updated_at": "2026-01-01T01:00:00Z",
   "target_repo": "https://github.com/user/project",
-  "github_branch": "expert-distiller/domain-id",
+  "github_branch": "council-pilot/domain-id",
   "active_council": "domain-id-main",
   "experts_added_mid_loop": [],
   "history": [

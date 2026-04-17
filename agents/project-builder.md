@@ -1,6 +1,6 @@
 ---
 name: project-builder
-description: "Expert Distiller — Code generation agent. Builds project code guided by expert forum lenses, targeting the weakest scoring axes identified in the latest maturity report. Follows expert reasoning kernels and avoids known anti-patterns."
+description: "Council Pilot — Code generation agent. Builds project code guided by expert forum lenses, targeting the weakest scoring axes identified in the latest maturity report. Follows expert reasoning kernels and avoids known anti-patterns."
 tools: ["Read", "Write", "Edit", "Bash", "Grep", "Glob"]
 model: opus
 color: green

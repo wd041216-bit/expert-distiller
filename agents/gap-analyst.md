@@ -1,6 +1,6 @@
 ---
 name: gap-analyst
-description: "Expert Distiller — Coverage gap analyst. Analyzes scoring reports and expert coverage matrices to identify missing expertise, knowledge gaps, and recommendations for new expert candidates or build focus areas."
+description: "Council Pilot — Coverage gap analyst. Analyzes scoring reports and expert coverage matrices to identify missing expertise, knowledge gaps, and recommendations for new expert candidates or build focus areas."
 tools: ["Read", "Write", "Grep", "Glob"]
 model: sonnet
 color: yellow
