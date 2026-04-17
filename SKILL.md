@@ -1,5 +1,5 @@
 ---
-name: expert-distiller
+name: council-pilot
 description: >-
   Fully autonomous expert forum builder and project maturity engine.
   User delivers an idea, auto-distills domain experts from web sources,
@@ -25,7 +25,7 @@ model: opus
 argument-hint: "<domain-or-idea> [--target-repo URL] [--max-iterations N] [--quick]"
 ---
 
-# Expert Distiller — Autonomous Pipeline
+# Council Pilot — Autonomous Pipeline
 
 Build a fully automated expert-driven project from a single idea. The pipeline discovers experts, distills their public knowledge, forms a council, scores maturity, builds code, debugs, and iterates until the council awards 100/100. Then submits to GitHub.
 
@@ -283,10 +283,10 @@ For each stage failure:
    ```bash
    python3 scripts/expert_distiller.py report --root <root> --domain <domain> --format markdown --output MATURITY_REPORT.md
    ```
-3. Create git branch: `expert-distiller/<domain_id>`
+3. Create git branch: `council-pilot/<domain_id>`
 4. Commit all changes with format:
    ```
-   feat(expert-distiller): <domain> maturity 100/100
+   feat(council-pilot): <domain> maturity 100/100
 
    Breadth: 25/25 | Depth: 25/25 | Thickness: 25/25 | Effectiveness: 25/25
    Expert council: <council_name> (<expert_count> experts)
@@ -294,7 +294,7 @@ For each stage failure:
    ```
 5. Push branch and create PR:
    ```bash
-   git push -u origin expert-distiller/<domain_id>
+   git push -u origin council-pilot/<domain_id>
    gh pr create --title "Expert-Distilled: <domain>" --body-file MATURITY_REPORT.md
    ```
 6. Update pipeline state: `status: submitted`

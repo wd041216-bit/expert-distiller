@@ -1,4 +1,4 @@
 interface:
-  display_name: "Expert Distiller"
-  short_description: "Build source-gated expert forums."
-  default_prompt: "Distill a reusable expert forum for this domain using tiered public sources, promotion audits, profile contracts, and coverage-gap routing."
+  display_name: "Council Pilot"
+  short_description: "Autonomous expert-council-driven project builder for Claude Code."
+  default_prompt: "Build an expert council for this domain and autonomously drive a project to production maturity, iterating until the council scores 100/100."

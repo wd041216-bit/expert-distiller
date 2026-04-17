@@ -1,6 +1,6 @@
 ---
 name: expert-researcher
-description: "Expert Distiller — Research specialist. Discovers expert candidates via web search using Z.AI tools, collects source URLs, evaluates source tier quality, and produces candidate dossiers ready for distillation."
+description: "Council Pilot — Research specialist. Discovers expert candidates via web search, collects source URLs, evaluates source tier quality, and produces candidate dossiers ready for distillation."
 tools: ["Read", "Write", "Grep", "Glob", "Bash", "mcp__web_search_and_fetch__web_search", "mcp__web_search_and_fetch__web_fetch"]
 model: sonnet
 color: green
