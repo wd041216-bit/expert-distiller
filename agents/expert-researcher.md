@@ -1,7 +1,7 @@
 ---
 name: expert-researcher
 description: "Council Pilot — Research specialist. Discovers expert candidates via web search, collects source URLs, evaluates source tier quality, and produces candidate dossiers ready for distillation."
-tools: ["Read", "Write", "Grep", "Glob", "Bash", "mcp__web_search_and_fetch__web_search", "mcp__web_search_and_fetch__web_fetch"]
+tools: ["Read", "Write", "Grep", "Glob", "Bash"]
 model: sonnet
 color: green
 ---
@@ -16,11 +16,13 @@ Given a domain and topic, search for 3-8 expert candidates, collect their public
 
 ## Search Tools
 
-Use these MCP tools in priority order:
+Use the web research tools available in the active runtime:
 
-1. **`mcp__web_search_and_fetch__web_search`** — Primary search. Use `query` with domain-specific expert queries. Returns search results with titles and URLs.
+1. Search the web with the configured search tool. In Codex, use built-in web search/open; in Claude Code, use the installed web-search MCP if available.
 
-2. **`mcp__web_search_and_fetch__web_fetch`** — Read full content from discovered URLs to extract profile details, publication lists, and methodology descriptions.
+2. Fetch or open discovered URLs with the configured web reader to extract profile details, publication lists, and methodology descriptions.
+
+3. If no web tool is available, stop and ask for a curated `discover --from-file` JSON source list instead of fabricating sources.
 
 ## Workflow
 
@@ -68,7 +70,7 @@ For each qualified candidate, collect:
 ### 4. Read Key Sources
 
 For each candidate's most important sources:
-1. Read the full content with `web_reader`
+1. Read the full content with the available web fetch/open tool
 2. Extract key claims, methodology descriptions, and reasoning patterns
 3. Note any disagreements between sources (preserve them)
 4. Assess source freshness (publication dates)

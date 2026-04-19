@@ -19,8 +19,6 @@ allowed-tools:
   - Grep
   - Glob
   - Agent
-  - mcp__web_search_and_fetch__web_search
-  - mcp__web_search_and_fetch__web_fetch
 model: opus
 argument-hint: "<domain-or-idea> [--target-repo URL] [--max-iterations N] [--quick]"
 ---
@@ -88,8 +86,8 @@ INIT → DISCOVER → DISTILL → COUNCIL → SCORE
 
 **Steps**:
 1. Generate search queries from the domain topic (see `agents/expert-researcher.md`)
-2. For each query, use `mcp__web_search_and_fetch__web_search` to search
-3. For each result, use `mcp__web_search_and_fetch__web_fetch` to read candidate pages
+2. For each query, use the current environment's web search tool to search
+3. For each result, use the current environment's web fetch/open tool to read candidate pages
 4. Identify real public figures with domain expertise
 5. Collect source URLs classified by tier (A/B/C per `references/source-gates.md`)
 6. For each candidate, run CLI commands:
@@ -119,7 +117,7 @@ INIT → DISCOVER → DISTILL → COUNCIL → SCORE
    python3 scripts/expert_distiller.py profile --root <root> --domain <domain> --expert-id <id> --name "<Name>"
    ```
 3. For each promoted expert, fill the profile by reading source content:
-   - Read source URLs with `mcp__web_search_and_fetch__web_fetch`
+   - Read source URLs with the current environment's web fetch/open tool
    - Extract career arc, reasoning patterns, critique styles, blind spots
    - Write the filled profile to `experts/<id>/profile.json`
    - Write the distillate markdown to `experts/<id>/distillate.md`
@@ -355,9 +353,10 @@ Maximum 2 new experts per iteration. Total council size must not exceed 10.
 
 ## Search Tools
 
-Use GLM ecosystem MCP tools for web research:
-- `mcp__web_search_and_fetch__web_search` — primary search
-- `mcp__web_search_and_fetch__web_fetch` — read full page content
+Use whichever web research surface is available in the active agent runtime:
+- In Codex, use the built-in web search/open workflow when current public sources are needed.
+- In Claude Code, use configured web-search MCP tools if they are installed.
+- If no web tool is available, run `discover --from-file` with a curated JSON source list and mark the run as source-file assisted.
 
 ## Safety and Trust
 

@@ -115,14 +115,40 @@ python3 scripts/expert_distiller.py source \
   --tier A --title "Official profile" \
   --url "https://www.cs.ubc.ca/~bowman/" --note "Research group homepage"
 
+python3 scripts/expert_distiller.py source \
+  --root ./forum --expert-id samuel-bowman \
+  --tier B --title "Public lecture or interview" \
+  --url "https://example.com/samuel-bowman-interview" --note "Reasoning and evaluation context"
+
+python3 scripts/expert_distiller.py candidate \
+  --root ./forum --domain "AI Reliability" \
+  --name "Margaret Mitchell" --reason "Responsible AI and model evaluation perspective"
+
+python3 scripts/expert_distiller.py source \
+  --root ./forum --expert-id margaret-mitchell \
+  --tier A --title "Official profile" \
+  --url "https://m-mitchell.com/" --note "Research homepage"
+
+python3 scripts/expert_distiller.py source \
+  --root ./forum --expert-id margaret-mitchell \
+  --tier B --title "Public talk or interview" \
+  --url "https://example.com/margaret-mitchell-interview" --note "Responsible AI context"
+
 # Audit, profile, form council, score
 python3 scripts/expert_distiller.py audit --root ./forum --expert-id samuel-bowman
+python3 scripts/expert_distiller.py audit --root ./forum --expert-id margaret-mitchell
 python3 scripts/expert_distiller.py profile --root ./forum --domain "AI Reliability" \
   --expert-id samuel-bowman --name "Samuel Bowman"
+python3 scripts/expert_distiller.py profile --root ./forum --domain "AI Reliability" \
+  --expert-id margaret-mitchell --name "Margaret Mitchell"
 python3 scripts/expert_distiller.py council create --root ./forum --domain "AI Reliability"
 python3 scripts/expert_distiller.py score --root ./forum --domain "AI Reliability"
 python3 scripts/expert_distiller.py report --root ./forum --domain "AI Reliability" --format markdown
 ```
+
+The standalone example demonstrates command wiring. For a real council, replace
+the `example.com` Tier B placeholders with actual public interviews, talks,
+essays, or course notes before treating the sources as evidence.
 
 ## CLI Commands
 
