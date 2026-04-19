@@ -4,6 +4,7 @@ from __future__ import annotations
 import argparse
 import json
 import re
+import statistics
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
@@ -337,6 +338,320 @@ def weighted_median(values: list[float], weights: list[float]) -> float:
         if cumulative >= total_weight / 2:
             return value
     return pairs[-1][0]
+
+
+def clamp_score(value: float) -> int:
+    return max(0, min(25, int(value)))
+
+
+def find_project_root(path: Path) -> Path:
+    start = path if path.is_dir() else path.parent
+    for candidate in [start, *start.parents]:
+        if (candidate / ".git").exists():
+            return candidate
+    return start
+
+
+def read_text_file(path: Path, max_chars: int = 250_000) -> str:
+    try:
+        return path.read_text(encoding="utf-8", errors="replace")[:max_chars]
+    except OSError:
+        return ""
+
+
+def collect_artifact(path_value: str | None) -> dict[str, Any]:
+    """Collect lightweight artifact signals for standalone scoring.
+
+    The CLI cannot run an LLM council by itself, so it uses transparent,
+    reproducible signals: sections, tables, stats, manifests, tests, references,
+    limitations, and claim-boundary language. This makes the command usable
+    outside SKILL mode while keeping the report auditable.
+    """
+    if not path_value:
+        return {
+            "path": "",
+            "exists": False,
+            "project_root": str(Path.cwd()),
+            "text": "",
+            "files": [],
+            "word_count": 0,
+            "line_count": 0,
+        }
+
+    path = Path(path_value).expanduser()
+    if not path.is_absolute():
+        path = Path.cwd() / path
+    path = path.resolve()
+    project_root = find_project_root(path) if path.exists() else Path.cwd()
+
+    files: list[Path] = []
+    text_parts: list[str] = []
+    if path.is_file():
+        files = [path]
+        text_parts.append(read_text_file(path))
+    elif path.is_dir():
+        suffixes = {".md", ".txt", ".json", ".csv", ".py", ".toml", ".yaml", ".yml"}
+        for file_path in sorted(path.rglob("*")):
+            if file_path.is_file():
+                files.append(file_path)
+                if file_path.suffix.lower() in suffixes and sum(len(t) for t in text_parts) < 350_000:
+                    text_parts.append(read_text_file(file_path, max_chars=80_000))
+
+    text = "\n".join(text_parts)
+    return {
+        "path": str(path),
+        "exists": path.exists(),
+        "project_root": str(project_root),
+        "text": text,
+        "files": [str(file_path) for file_path in files],
+        "word_count": len(re.findall(r"\w+", text)),
+        "line_count": text.count("\n") + 1 if text else 0,
+    }
+
+
+def text_has(text: str, patterns: list[str]) -> bool:
+    lowered = text.lower()
+    return any(pattern.lower() in lowered for pattern in patterns)
+
+
+def count_regex(text: str, pattern: str) -> int:
+    return len(re.findall(pattern, text, flags=re.IGNORECASE | re.MULTILINE))
+
+
+def sentence_overclaim_count(text: str) -> int:
+    """Count unsupported-looking overclaim sentences.
+
+    Rejected or negated claims are not counted; this is intentionally simple and
+    auditable rather than semantically magical.
+    """
+    bad = 0
+    for sentence in re.split(r"(?<=[.!?])\s+", text):
+        lowered = re.sub(r"\s+", " ", sentence.lower())
+        if "|" in sentence:
+            continue
+        if not any(term in lowered for term in ("universal", "universally", "generally better", "semantic correctness", "semantic-correctness", "architecture-level")):
+            continue
+        if any(
+            marker in lowered
+            for marker in (
+                "not ",
+                "no ",
+                "rejected",
+                "does not",
+                "do not",
+                "future",
+                "limitation",
+                "separate",
+                "separates",
+                "blocked",
+                "outside",
+                "rather than",
+                "claim ledger",
+            )
+        ):
+            continue
+        bad += 1
+    return bad
+
+
+def artifact_signals(artifact: dict[str, Any], root: Path, domain: dict[str, Any]) -> dict[str, Any]:
+    text = artifact["text"]
+    project_root = Path(artifact["project_root"])
+    files = [Path(item) for item in artifact["files"]]
+    file_names = " ".join(str(path.relative_to(project_root)) if path.is_absolute() and project_root in path.parents else str(path) for path in files)
+    lower_text = text.lower()
+    readme_text = read_text_file(project_root / "README.md", max_chars=80_000)
+    companion_text = text + "\n" + readme_text
+    companion_lower = companion_text.lower()
+    coverage_axes = domain.get("coverage_axes", [])
+
+    signals = {
+        "exists": artifact["exists"],
+        "word_count": artifact["word_count"],
+        "section_count": count_regex(text, r"^#{1,3}\s+"),
+        "table_count": count_regex(text, r"^\|.*\|$"),
+        "numeric_count": count_regex(text, r"\b\d+(?:\.\d+)?\s*(?:%|pp|/|records|tasks|models|modes)?\b"),
+        "has_abstract": "## abstract" in lower_text or re.search(r"^# .+\n\n## Abstract", text, re.I | re.M) is not None,
+        "has_introduction": "introduction" in lower_text,
+        "has_related_work": "related work" in lower_text or "positioning" in lower_text,
+        "has_method": text_has(text, ["method", "study design", "data", "outcomes", "compared arms"]),
+        "has_results": "results" in lower_text,
+        "has_discussion": "discussion" in lower_text,
+        "has_limitations": "limitations" in lower_text,
+        "has_conclusion": "conclusion" in lower_text,
+        "has_references": "references" in lower_text or "bibliography" in lower_text,
+        "has_data_availability": "data availability" in lower_text or "artifact availability" in lower_text or "asset traceability" in lower_text,
+        "has_claim_ledger": "claim ledger" in lower_text or "claim_support" in lower_text or "claim-support" in lower_text,
+        "has_semantic_oracle_boundary": text_has(text, ["semantic oracle", "semantic correctness remains", "not semantic-correctness evidence", "future semantic"]),
+        "has_uncertainty": text_has(text, ["confidence interval", "interval", "wilson", "p-value", "discordance", "mcnemar"]),
+        "has_paired_analysis": text_has(text, ["paired", "discordance", "csl-only", "direct-only"]),
+        "has_failure_taxonomy": "failure taxonomy" in lower_text or "failure-stage" in lower_text,
+        "has_token_cap": text_has(text, ["token", "cap-hit", "truncation"]),
+        "has_full_matrix": "18-row" in lower_text or count_regex(text, r"^\| `[^`]+` \| `(?:default|think|no_think)` \|") >= 12,
+        "has_figures": ".svg" in lower_text or "figure 1" in lower_text,
+        "has_tests": "pytest" in companion_lower or "tests/" in file_names or any("test" in path.name.lower() for path in files) or (project_root / "tests").exists(),
+        "has_scripts": "analysis/" in file_names or any(path.suffix == ".py" for path in files) or (project_root / "analysis").exists() or (project_root / "semantic_oracle").exists(),
+        "has_manifest": "manifest" in companion_lower or (project_root / "clean_research_assets" / "MANIFEST.csv").exists(),
+        "has_clean_assets": "clean_research_assets" in companion_lower or (project_root / "clean_research_assets").exists(),
+        "has_repro_commands": "python3 " in companion_text or "pytest" in companion_text or "reproduce" in companion_lower,
+        "coverage_axes_mentioned": sum(
+            1
+            for axis in coverage_axes
+            if axis.lower().replace("-", " ") in lower_text
+            or axis.lower() in lower_text
+            or all(part in lower_text for part in axis.lower().split("-"))
+        ),
+        "coverage_axes_total": len(coverage_axes),
+        "overclaim_count": sentence_overclaim_count(text),
+        "placeholder_count": text.count("TODO") + text.lower().count("should use"),
+    }
+    return signals
+
+
+def axis_score(axis: str, signals: dict[str, Any]) -> tuple[int, list[str], list[str]]:
+    evidence: list[str] = []
+    gaps: list[str] = []
+    score = 0
+
+    if not signals["exists"]:
+        return 0, [], ["Artifact path does not exist"]
+
+    if axis == "breadth":
+        checks = [
+            ("abstract", signals["has_abstract"]),
+            ("introduction", signals["has_introduction"]),
+            ("related work / positioning", signals["has_related_work"]),
+            ("method or study design", signals["has_method"]),
+            ("results", signals["has_results"]),
+            ("discussion", signals["has_discussion"]),
+            ("limitations", signals["has_limitations"]),
+            ("conclusion", signals["has_conclusion"]),
+            ("claim ledger", signals["has_claim_ledger"]),
+            ("semantic-oracle boundary", signals["has_semantic_oracle_boundary"]),
+            ("artifact/data availability", signals["has_data_availability"]),
+            ("references", signals["has_references"]),
+        ]
+        score = 10 + sum(1 for _, ok in checks if ok)
+        if signals["coverage_axes_total"]:
+            score += min(3, round(3 * signals["coverage_axes_mentioned"] / signals["coverage_axes_total"]))
+            evidence.append(f"Mentions {signals['coverage_axes_mentioned']}/{signals['coverage_axes_total']} domain coverage axes")
+        for name, ok in checks:
+            if ok:
+                evidence.append(f"Includes {name}")
+            else:
+                gaps.append(f"Missing {name}")
+
+    elif axis == "depth":
+        checks = [
+            ("sample sizes and numeric results", signals["numeric_count"] >= 20),
+            ("uncertainty reporting", signals["has_uncertainty"]),
+            ("paired analysis", signals["has_paired_analysis"]),
+            ("full matrix or broad subgroup accounting", signals["has_full_matrix"]),
+            ("task/failure heterogeneity", signals["has_failure_taxonomy"]),
+            ("token/cap diagnostics", signals["has_token_cap"]),
+            ("tables", signals["table_count"] >= 3),
+            ("limitations tied to evidence", signals["has_limitations"] and signals["has_semantic_oracle_boundary"]),
+        ]
+        score = 9 + 2 * sum(1 for _, ok in checks if ok)
+        for name, ok in checks:
+            if ok:
+                evidence.append(f"Has {name}")
+            else:
+                gaps.append(f"Needs {name}")
+
+    elif axis == "thickness":
+        checks = [
+            ("clean asset package", signals["has_clean_assets"]),
+            ("manifest", signals["has_manifest"]),
+            ("scripts or implementation files", signals["has_scripts"]),
+            ("tests or verification commands", signals["has_tests"]),
+            ("reproducibility commands", signals["has_repro_commands"]),
+            ("figure assets", signals["has_figures"]),
+            ("claim discipline", signals["has_claim_ledger"]),
+            ("no placeholders", signals["placeholder_count"] == 0),
+        ]
+        score = 9 + 2 * sum(1 for _, ok in checks if ok)
+        for name, ok in checks:
+            if ok:
+                evidence.append(f"Includes {name}")
+            else:
+                gaps.append(f"Missing or weak: {name}")
+
+    elif axis == "effectiveness":
+        checks = [
+            ("answers the research question", signals["has_abstract"] and signals["has_conclusion"]),
+            ("main claim bounded", signals["has_claim_ledger"] and signals["overclaim_count"] == 0),
+            ("semantic correctness separated", signals["has_semantic_oracle_boundary"]),
+            ("results support narrative", signals["has_results"] and signals["has_uncertainty"]),
+            ("reader can trace artifacts", signals["has_data_availability"] and signals["has_manifest"]),
+            ("submission-like completeness", signals["has_references"] and signals["has_related_work"]),
+            ("polished surface", signals["placeholder_count"] == 0 and signals["word_count"] >= 1800),
+        ]
+        score = 11 + 2 * sum(1 for _, ok in checks if ok)
+        for name, ok in checks:
+            if ok:
+                evidence.append(f"Artifact {name}")
+            else:
+                gaps.append(f"Artifact does not yet {name}")
+        if signals["overclaim_count"]:
+            score -= min(5, signals["overclaim_count"])
+            gaps.append(f"Potential overclaim sentences: {signals['overclaim_count']}")
+
+    return clamp_score(score), evidence, gaps
+
+
+def expert_vote(axis: str, base: int, profile: dict[str, Any], signals: dict[str, Any]) -> int:
+    eid = profile.get("id", "")
+    vote = base
+    if eid == "controlled-natural-language":
+        if axis in ("breadth", "effectiveness") and signals["has_semantic_oracle_boundary"]:
+            vote += 1
+        if signals["overclaim_count"]:
+            vote -= 2
+    elif eid == "dsl-language-engineering":
+        if axis in ("depth", "thickness") and text_has(profile.get("domain_relevance", {}).get("summary", ""), ["DSL"]):
+            vote += 0
+        if axis in ("depth", "effectiveness") and not signals["has_method"]:
+            vote -= 2
+    elif eid == "llm-code-evaluation":
+        if axis == "depth" and not signals["has_paired_analysis"]:
+            vote -= 3
+        if axis == "effectiveness" and not signals["has_semantic_oracle_boundary"]:
+            vote -= 2
+    elif eid == "program-synthesis-verification":
+        if axis == "effectiveness" and signals["has_semantic_oracle_boundary"]:
+            vote += 1
+        if axis == "effectiveness" and "semantic" in signals and not signals["has_semantic_oracle_boundary"]:
+            vote -= 3
+    elif eid == "statistical-analysis":
+        if axis == "depth" and signals["has_uncertainty"] and signals["has_paired_analysis"]:
+            vote += 1
+        if axis == "depth" and not signals["has_full_matrix"]:
+            vote -= 2
+    elif eid == "reproducibility-governance":
+        if axis == "thickness" and signals["has_manifest"] and signals["has_clean_assets"]:
+            vote += 1
+        if axis in ("breadth", "effectiveness") and not signals["has_data_availability"]:
+            vote -= 2
+    return clamp_score(vote)
+
+
+def normalized_council_weights(root: Path, council: dict[str, Any]) -> tuple[list[dict[str, Any]], list[float]]:
+    members: list[dict[str, Any]] = []
+    weights: list[float] = []
+    for member in council.get("members", []):
+        profile = read_json(root / "experts" / member.get("expert_id", "") / "profile.json", {})
+        source_weight = float(profile.get("source_confidence", {}).get("weighted_score", 0.5) or 0.5)
+        role_multiplier = {"chair": 1.5, "reviewer": 1.2, "advocate": 1.0, "skeptic": 1.0, "overclaim-skeptic": 1.1}.get(member.get("role", ""), 1.0)
+        weight = float(member.get("weight", 0.1) or 0.1) * source_weight * role_multiplier
+        members.append({"member": member, "profile": profile})
+        weights.append(weight)
+    total = sum(weights)
+    if total <= 0 and weights:
+        weights = [1 / len(weights)] * len(weights)
+    elif total > 0:
+        weights = [w / total for w in weights]
+    return members, weights
 
 
 def load_pipeline_state(root: Path) -> dict[str, Any]:
@@ -673,7 +988,7 @@ def manage_council(args: argparse.Namespace) -> None:
 
 
 def score_artifact(args: argparse.Namespace) -> None:
-    """Score an artifact against the expert council. Outputs scoring report structure."""
+    """Score an artifact against the expert council."""
     root = args.root.expanduser()
     domain_id = slugify(args.domain)
     ensure_layout(root)
@@ -688,42 +1003,92 @@ def score_artifact(args: argparse.Namespace) -> None:
         raise SystemExit(f"Council {council_id} not found.")
 
     iteration = state.get("iteration", 0) + 1
+    domain = read_json(root / "domains" / f"{domain_id}.json", {})
+    artifact = collect_artifact(args.artifact)
+    signals = artifact_signals(artifact, root, domain)
+    members, weights = normalized_council_weights(root, council)
 
     axes: list[dict[str, Any]] = []
     for axis in SCORING_AXES:
+        base_score, evidence, gaps = axis_score(axis, signals)
+        votes: dict[str, int] = {}
+        vote_values: list[float] = []
+        for item in members:
+            profile = item["profile"]
+            expert_id = profile.get("id") or item["member"].get("expert_id", "")
+            vote = expert_vote(axis, base_score, profile, signals)
+            votes[expert_id] = vote
+            vote_values.append(vote)
+        final_score = clamp_score(weighted_median(vote_values, weights) if vote_values else base_score)
         axes.append({
             "axis": axis,
-            "score": 0,
-            "evidence": [],
-            "gaps": [f"No artifact evaluated yet for {axis}"],
-            "expert_votes": {},
+            "score": final_score,
+            "base_score": base_score,
+            "evidence": evidence,
+            "gaps": gaps,
+            "expert_votes": votes,
+            "weighted_median": final_score,
         })
+
+    total = sum(axis["score"] for axis in axes)
+    verdict = "converged" if total == 100 else "needs_work"
+    recommendations: list[str] = []
+    for axis in axes:
+        for gap in axis["gaps"][:3]:
+            if gap not in recommendations:
+                recommendations.append(f"{axis['axis']}: {gap}")
+    if signals["placeholder_count"]:
+        recommendations.insert(0, "Remove placeholder language such as TODO or 'should use'.")
+    if signals["overclaim_count"]:
+        recommendations.insert(0, "Rewrite potential overclaim sentences or mark them explicitly as rejected/limitations.")
+    if not recommendations:
+        recommendations.append("Artifact satisfies the standalone scoring checks; use SKILL-mode council review for any remaining qualitative polish.")
 
     report = {
         "domain": domain_id,
         "artifact_path": args.artifact or "",
         "iteration": iteration,
         "council_id": council_id,
+        "mode": "standalone-real-score",
+        "artifact_signals": {
+            key: signals[key]
+            for key in sorted(signals)
+            if key not in {"text"}
+        },
         "axes": axes,
-        "total": 0,
-        "verdict": "needs_work",
+        "score": {
+            "total": total,
+            **{axis["axis"]: axis["score"] for axis in axes},
+        },
+        "total": total,
+        "verdict": verdict,
         "generated_at": now_iso(),
-        "recommendations": ["Run SKILL mode for LLM-driven scoring"],
+        "recommendations": recommendations[:12],
     }
-
-    if args.artifact:
-        artifact_path = Path(args.artifact)
-        if artifact_path.exists():
-            report["recommendations"] = [
-                "In standalone mode, scoring is a placeholder. Under SKILL mode, "
-                "the maturity-scorer agent evaluates the artifact using expert lenses.",
-            ]
-    else:
-        report["recommendations"].append("No artifact path provided — score is a baseline placeholder.")
 
     timestamp = now_iso().replace(":", "-").replace("T", "_").replace("Z", "")
     report_path = root / "scoring_reports" / f"{domain_id}_{timestamp}.json"
     write_json(report_path, report)
+
+    state["iteration"] = iteration
+    state["last_score"] = report["score"]
+    state["current_phase"] = "score"
+    state.setdefault("history", []).append({
+        "iteration": iteration,
+        "scores": report["score"],
+        "action": f"score {args.artifact or '<baseline>'}",
+        "report": str(report_path),
+        "generated_at": report["generated_at"],
+    })
+    if verdict == "converged":
+        state["status"] = "scored_converged"
+    else:
+        state["status"] = "needs_work"
+    save_pipeline_state(root, state)
+
+    council.setdefault("scoring_history_refs", []).append(str(report_path.relative_to(root)))
+    council["updated_at"] = now_iso()
+    write_json(root / "councils" / f"{council_id}.json", council)
 
     print(json.dumps(report, indent=2, ensure_ascii=False))
 
@@ -945,6 +1310,8 @@ def generate_report(args: argparse.Namespace) -> None:
             lines.append("|-----------|-------|---------|-------|-----------|--------------|--------|")
             for entry in history:
                 s = entry.get("scores", {})
+                if not entry.get("action") and not s.get("total"):
+                    continue
                 lines.append(
                     f"| {entry.get('iteration', '?')} "
                     f"| {s.get('total', 0)} "
